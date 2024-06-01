@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GPST</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="helper.js" defer></script>
+    <style>
+      td {
+        vertical-align: middle;
+      }
+      audio {
+        width: 20vw;
+        min-width: 100px;
+        max-width: 250px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container pt-5 mt-5 shadow p-5 mb-5 bg-white rounded">
+      <div class="text-center">
+        <h1>GPST</h1>
+        <h3>Generative Pre-Trained Speech Language Model with Efficient Hierarchical Transformer</h3>
+        <p class="lead fw-bold">
+          |<a
+            href="https://github.com/gpstacl/GPST"
+            class="btn border-white bg-white fw-bold"
+            >GitHub</a
+          >|
+        </p>
+      </div>
+      <p>
+        <b>Abstract.</b> While recent advancements in speech language models have achieved significant progress, they face remarkable challenges in modeling the long acoustic sequence of neural audio codecs. 
+        In this paper, we introduce \textbf{G}enerative \textbf{P}re-Trained \textbf{S}peech \textbf{T}ransformer (GPST), a hierarchical transformer designed for efficient speech language modeling. 
+        GPST quantizes audio waveforms into two distinct types of discrete speech representations and integrates them within a hierarchical transformer architecture, allowing for a unified one-stage generation process and enhancing Hi-Res audio generation capabilities. 
+        By training on large corpora of speeches in an end-to-end unsupervised manner, GPST can generate syntactically consistent speech with diverse speaker identities. When provided a brief 3-second prompt, GPST can produce natural and coherent personalized speech, demonstrating in-context learning abilities. 
+        Moreover, our approach can be easily extended to spoken cross-lingual speech generation by incorporating multi-lingual semantic tokens and universal acoustic tokens. Experimental results indicate that GPST significantly outperforms the existing speech language models in terms of word error rate, speech quality, and speaker similarity. 
+      </p>
+    </div>
+
+    <div class="container shadow p-5 mb-5 bg-white rounded">
+      <h3>Semantic to Acoustic</h3>
+
+      <p class="mb-0">
+        <br />
+        In this setting, we use the ground-truth semantic tokens as condition for acoustic generation, which is similar to the task of TTS. 
+        The generated speech preserves the content of the spoken sentence while varying in speaker identity. 
+        We also train a toy decoder-only transformer named GPST-TTS on the LibriSpeech 960h dataset to generate semantic tokens with text as condition, supporting the TTS task.
+      </p>
+
+      <div class="container pt-3 table-responsive">
+        <table
+          class="table table-striped table-hover"
+          id="semantic-to-acoustic-table"
+        >
+          <thead>
+            <tr>
+              <th>Original</th>
+              <th>GPST-TTS</th>
+              <th>GPST</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <ul class="pagination justify-content-center">
+          <li class="page-item active">
+            <a id="semantic-to-acoustic-page-1" class="page-link" href="#">1</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+
+    <div class="container shadow p-5 mb-5 bg-white rounded">
+      <h3>Speaker Identity Transfer</h3>
+
+      <p class="mb-0">
+        <br />
+        In this setting, we are interested in the task of voice conversion that transfers the speaker identity of the prompt speech into the target speech. 
+        GPST is encouraged to generate subsequent acoustic tokens that share the speaker identity with acoustic prompt while remaining consistent with the content of semantic tokens. 
+        We find that directly concatenating would cause unstable generation around the interface boundary. 
+        To address this issue, we propose artificially inserting a very short silence excerpt (0.1 second) to explicitly break the linguistic continuation. 
+        In this way, the model would not struggle to mitigate the discontinuity is able to generate stable speeches.
+      </p>
+
+      <div class="container pt-3 table-responsive">
+        <table
+          class="table table-striped table-hover"
+          id="speaker-identity-transfer-table"
+        >
+          <thead>
+            <tr>
+              <th>Original</th>
+              <th>Prompt</th>
+              <th>GPST</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <ul class="pagination justify-content-center">
+          <li class="page-item active">
+            <a id="speaker-identity-transfer-page-1" class="page-link" href="#">1</a>
+          </li>
+          <li class="page-item">
+            <a id="speaker-identity-transfer-page-2" class="page-link" href="#">2</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+
+    <div class="container shadow p-5 mb-5 bg-white rounded">
+      <h3>Unconditional Generation</h3>
+
+      <p class="mb-0">
+        <br />
+        In this setting, we unconditionally generate the semantic tokens, which are subsequently used as the condition for acoustic generation. 
+        The randomly sampled semantic sequence can generate diverse, syntactically and semantically consistent linguistic content. 
+        The acoustic tokens vary in speaker identity, prosody with the semantic content serving as a guideline. 
+      </p>
+
+      <div class="container pt-3 table-responsive">
+        <table
+          class="table table-striped table-hover"
+          id="unconditional-generation-table"
+        >
+          <thead>
+            <tr>
+              <th>GPST</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <ul class="pagination justify-content-center">
+          <li class="page-item active">
+            <a id="unconditional-generation-page-1" class="page-link" href="#">1</a>
+          </li>
+          <li class="page-item">
+            <a id="unconditional-generation-page-2" class="page-link" href="#">2</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+
+  </body>
+</html>
