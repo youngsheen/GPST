@@ -28,7 +28,7 @@ git clone https://github.com/youngsheen/GPST.git
 cd GPST
 ```
 
-2. Install `fairseq` and `encodec` via `pip`. Install [seamless_communication](https://github.com/facebookresearch/seamless_communication) and [encodec](https://github.com/facebookresearch/encodec)
+2. Install `fairseq` and `encodec` via `pip`. Install [seamless_communication](https://github.com/facebookresearch/seamless_communication) and [fairseq2](https://github.com/facebookresearch/fairseq2).
 
 3. Install [`flash-attn`](https://github.com/Dao-AILab/flash-attention) for faster attention computation.
 
