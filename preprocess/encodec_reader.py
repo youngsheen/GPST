@@ -60,6 +60,6 @@ class EncodecFeatureReader(torch.nn.Module):
         for start in range(0, x.size(-1), self.max_chunk):
             encoded_frames = self.model.encode(x[...,start : start + self.max_chunk])
             codes = torch.cat([encoded[0] for encoded in encoded_frames], dim=-1)  # [B, n_q, T]
-            feat.append(codes.squeeze(0))
+            feat.append(codes.squeeze(0).cpu())
         
-        return {"codec": torch.cat(feat, 1).cpu()}
+        return {"codec": torch.cat(feat, dim=1)}
