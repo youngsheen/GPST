@@ -1,0 +1,64 @@
+# @package _group_
+
+common:
+  fp16: true
+  fp16_init_scale: 4
+  log_format: json
+  log_interval: 1
+  min_loss_scale: 1e-6
+  user_dir: fairseq_user
+
+checkpoint:
+  save_interval: 1
+  save_interval_updates: 0
+  keep_last_epochs: 5
+  keep_interval_updates: -1
+  no_epoch_checkpoints: true
+
+task:
+  _name: semantic_acoustic
+  reduce: true
+  semantic_prefix: xlsr2_unit
+  codec_prefix: meta24khz_6kpbs_codec
+
+dataset:
+  train_subset: train-clean-100
+  valid_subset: dev-clean
+  num_workers: 4
+  max_tokens: 6500
+  skip_invalid_size_inputs_valid_test: true
+  required_batch_size_multiple: 1
+
+criterion:
+  _name: ce_loss_ls
+  label_smoothing: 0.1
+
+optimization:
+  max_update: 25000
+  lr: [4e-4]
+  update_freq: [1]
+  clip_norm: 1.0
+
+optimizer:
+  _name: adam
+  adam_betas: [0.9,0.98]
+  weight_decay: 0.01
+
+lr_scheduler:
+  _name: inverse_sqrt
+  warmup_updates: 2500
+  warmup_init_lr: 1e-7
+
+model:
+  _name: st2at
+  global_decoder_embed_dim: 512
+  global_decoder_ffn_embed_dim: 2048
+  global_decoder_layers: 10
+  global_decoder_attention_heads: 8
+  local_decoder_embed_dim: 512
+  local_decoder_ffn_embed_dim: 2048
+  local_decoder_layers: 2
+  local_decoder_attention_heads: 8
+  activation_fn: gelu
+  decoder_learned_pos: true
+

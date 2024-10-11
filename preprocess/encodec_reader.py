@@ -4,7 +4,7 @@ import torch
 
 class EncodecFeatureReader(torch.nn.Module):
     def __init__(
-        self, bandwidth=6.0, max_chunk=100 * 24_000, repository=None, lazy_load=False, 
+        self, bandwidth=6.0, max_chunk=60 * 24_000, repository=None, lazy_load=False, encoder_max_sample=None,
     ):
         super().__init__()
         # NB: fairseq doesn't support pathlib.Path
@@ -12,6 +12,7 @@ class EncodecFeatureReader(torch.nn.Module):
         self.model = None
         self.bandwidth = bandwidth
         self.max_chunk = max_chunk
+        self.encoder_max_sample = encoder_max_sample
         # this is useful for determining the device
         self.register_buffer("_float_tensor", torch.tensor([0], dtype=torch.float).cuda())
         if not self.lazy_load:
@@ -49,17 +50,12 @@ class EncodecFeatureReader(torch.nn.Module):
     @torch.inference_mode()
     def get_features(self, x, sr):
         # Load and pre-process the audio waveform
-        x = convert_audio(x.view(1, -1), sr, self.model.sample_rate, self.model.channels)
-        x = x.unsqueeze(0).to(self.device)
-        
-        if x.size(-1) > self.max_chunk:
-            print("too long:", x.size(-1) / self.model.sample_rate, "s")
-
-        # Extract discrete codes from EnCodec
-        feat = []
-        for start in range(0, x.size(-1), self.max_chunk):
-            encoded_frames = self.model.encode(x[...,start : start + self.max_chunk])
+        x = [convert_audio(xx.view(1, -1), ss, self.model.sample_rate, self.model.channels) for xx, ss in zip(x, sr)]
+        output = []
+        for idx in range(0, len(x), self.encoder_max_sample):
+            x_part = torch.stack(x[idx:idx + self.encoder_max_sample], dim = 0).to(self.device)
+            encoded_frames = self.model.encode(x_part)
             codes = torch.cat([encoded[0] for encoded in encoded_frames], dim=-1)  # [B, n_q, T]
-            feat.append(codes.squeeze(0).cpu())
-        
-        return {"codec": torch.cat(feat, dim=1)}
+            assert codes.dim() == 3
+            output.append(codes.cpu())
+        return {"tokens": torch.cat(output, dim = 0)}

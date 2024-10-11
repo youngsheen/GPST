@@ -16,7 +16,7 @@ from encodec.utils import convert_audio
 
 class Wav2vecFeatureReader(torch.nn.Module):
     def __init__(
-        self, checkpoint_path, kmeans_path, layer=None, dtype = torch.float32, max_chunk=100 * 16_000, lazy_load=False
+        self, checkpoint_path, kmeans_path, layer=None, dtype = torch.float32, max_chunk=60 * 16_000, lazy_load=False, encoder_max_sample=None
     ):
         super().__init__()
         # NB: fairseq doesn't support pathlib.Path
@@ -27,6 +27,7 @@ class Wav2vecFeatureReader(torch.nn.Module):
         self.model = None
         self.out_layer_number = layer - 1
         self.max_chunk = max_chunk
+        self.encoder_max_sample = encoder_max_sample
         # this is useful for determining the device
         self.register_buffer("_float_tensor", torch.tensor([0], dtype=dtype).cuda())
         if not self.lazy_load:
@@ -59,40 +60,29 @@ class Wav2vecFeatureReader(torch.nn.Module):
 
     @torch.inference_mode()
     def get_features(self, inputs, sr):
-        inputs = convert_audio(inputs.view(1,-1), sr, 16000, 1)
-        inputs = inputs.view(1, -1)
-        inputs = F.layer_norm(inputs, inputs.shape)
-        
-        inputs = inputs.type_as(self._float_tensor)
-        
-        if inputs.size(1) > self.max_chunk:
-            print("too long:", inputs.size(1) / 16000, "s")
-        
-        feat = []
-        for start in range(0, inputs.size(1), self.max_chunk):
-            x_chunk = inputs[:, start : start + self.max_chunk]
-            if x_chunk.shape[1] < 400: # too short would raise kernal error
-                continue
-            
-            decoded_audio = {
-                "waveform": x_chunk.squeeze(0),
-                "sample_rate": 16000,
-                "format": -1,
-            }
+        inputs = [convert_audio(xx.view(1,-1), ss, self.expected_sample_rate, 1) for xx, ss in zip(inputs, sr)]
+        inputs = [F.layer_norm(x, x.shape).type_as(self._float_tensor) for x in inputs]
+                        
+        output = []
+        for idx in range(0, len(inputs), self.encoder_max_sample):
+            decoded_audio = [{
+                    "waveform": x.squeeze(0),
+                    "sample_rate": 16000,
+                    "format": -1,
+                } for x in inputs[idx:idx + self.encoder_max_sample]]
             src = self.collate(decoded_audio)["waveform"]
             seqs, padding_mask = get_seqs_and_padding_mask(src)
-            seqs = seqs.view(1, -1).to(self.device)
+            seqs = seqs.view(len(inputs[idx:idx + self.encoder_max_sample]), -1).to(self.device)
             if padding_mask is not None:
                 padding_mask = padding_mask.to(self.device)
             batch = SequenceBatch(seqs=seqs, padding_mask=padding_mask)
-            features = self.model(batch, self.out_layer_number).squeeze(0)
-            units = self.kmeans_model(features)
-            feat.append(units.unsqueeze(0).cpu())
+            features = self.model(batch, self.out_layer_number)
+            features_flatten = features.flatten(0,1)
+            units = self.kmeans_model(features_flatten)
+            units = units.view(features.shape[0],-1)
+            output.append(units.cpu())
         
         #units, durations = torch.unique_consecutive(units, return_counts=True)
-        
-        item = {
-            "units": torch.cat(feat, dim = 1).squeeze(0),  #no reuduce
-        }
+        item = {"tokens": torch.cat(output, dim = 0)}
         return item
     
