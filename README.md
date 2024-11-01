@@ -8,7 +8,7 @@ Generative Pre-Trained Speech Language Model with Efficient Hierarchical Transfo
 </h5>
 
 
-<details open><summary>💡 Some other multimodal foundation model projects from our team may interest you ✨. </summary><p>
+<details open><summary>💡 Some other speech AI projects from our team may interest you ✨. </summary><p>
 <!--  may -->
 
 > [**Talk With Human-like Agents: Empathetic Dialogue Through Perceptible Acoustic Reception and Reaction**](https://github.com/Haoqiu-Yan/PerceptiveAgent) <br>
@@ -79,7 +79,7 @@ CUDA_VISIBLE_DEVICES=4,5 torchrun --nnodes=1 --nproc_per_node=2 --master_port=36
 ### Voice Conversion
 
 
-## 📑 Citation
+## Citation
 
 If you find GPST useful for your research and applications, please cite using this BibTeX:
 ```bibtex
